@@ -1,4 +1,4 @@
 first file
 hello this is new changes
 adding content to show git stash and pop example
-adding more content then will stash this file
+new line at the end of file added
