@@ -1,0 +1,26 @@
+---
+- name: Download SSMS installer on local controller and transfer to Windows
+  hosts: windows
+  gather_facts: no
+  vars_prompt:
+    - name: "task_to_perform"
+      prompt: |
+        Which task would you like to perform? 
+        Options:
+        - uninstall_python
+        - uninstall_ssms
+        - all
+      private: no
+
+  tasks:
+    - name: Uninstall SQL Server Management Studio
+      win_command: "C:\\Users\\Administrator\\Desktop\\Data\\SSMS-Setup-ENU.exe /quiet /uninstall"
+      args:
+        chdir: "C:\\Users\\Administrator\\Desktop\\Data\\"
+      when: task_to_perform in ['uninstall_ssms', 'all']
+
+    - name: Install Python on Windows
+      win_command: "C:\\Users\\Administrator\\Desktop\\Data\\python-3.9.7.exe /quiet /uninstall AllUsers=1 PrependPath=0"
+      args:
+        chdir: "C:\\Users\\Administrator\\Desktop\\Data\\"
+      when: task_to_perform in ['uninstall_python', 'all']

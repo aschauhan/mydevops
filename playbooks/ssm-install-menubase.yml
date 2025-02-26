@@ -1,0 +1,79 @@
+---
+- name: Download SSMS installer on local controller and transfer to Windows
+  hosts: windows
+  gather_facts: no
+  vars_prompt:
+    - name: "task_to_perform"
+      prompt: |
+        Which task would you like to perform? 
+        Options:
+        - download_ssms
+        - download_python
+        - copy_ssms
+        - copy_python
+        - install_python
+        - install_ssms
+        - all
+      private: no
+
+  tasks:
+    - name: Download SSMS installer to local controller
+      get_url:
+        url: https://go.microsoft.com/fwlink/?linkid=2199013&clcid=0x409
+        dest: "/tmp/SSMS-Setup-ENU.exe"
+      delegate_to: localhost
+      when: task_to_perform in ['download_ssms', 'all']
+
+    - name: Download Python installer to local controller
+      get_url:
+        url: https://www.python.org/ftp/python/3.9.7/python-3.9.7.exe
+        dest: "/tmp/python-3.9.7.exe"
+      delegate_to: localhost
+      when: task_to_perform in ['download_python', 'all']
+
+    - name: Copy SSMS installer to Windows target
+      win_copy:
+        src: "/tmp/SSMS-Setup-ENU.exe"
+        dest: C:\Users\Administrator\Desktop\Data\SSMS-Setup-ENU.exe
+      when: task_to_perform in ['copy_ssms', 'all']
+
+    - name: Copy Python installer to Windows target
+      win_copy:
+        src: "/tmp/python-3.9.7.exe"
+        dest: "C:\\Users\\Administrator\\Desktop\\Data\\python-3.9.7.exe"
+      when: task_to_perform in ['copy_python', 'all']
+
+    - name: Install Python on Windows
+      win_command: "C:\\Users\\Administrator\\Desktop\\Data\\python-3.9.7.exe /quiet InstallAllUsers=1 PrependPath=1"
+      args:
+        chdir: "C:\\Users\\Administrator\\Desktop\\Data\\"
+      register: python_install
+      when: task_to_perform in ['install_python', 'all']
+
+    - name: Print message if Python installation was successful
+      debug:
+        msg: "Python is installed successfully!"
+      when: task_to_perform in ['install_python', 'all'] and python_install is defined and python_install.rc == 0
+
+    - name: Print message if Python installation failed
+      debug:
+        msg: "Python installation failed!"
+      when: task_to_perform in ['install_python', 'all'] and python_install is defined and python_install.rc != 0
+
+    - name: Install SQL Server Management Studio
+      win_command: "C:\\Users\\Administrator\\Desktop\\Data\\SSMS-Setup-ENU.exe /quiet /install"
+      args:
+        chdir: "C:\\Users\\Administrator\\Desktop\\Data\\"
+      register: ssms_install
+      when: task_to_perform in ['install_ssms', 'all']
+
+    - name: Print message if SSMS installation was successful
+      debug:
+        msg: "SSMS is installed successfully!"
+      when: task_to_perform in ['install_ssms', 'all'] and ssms_install is defined and ssms_install.rc == 0
+
+    - name: Print message if SSMS installation failed
+      debug:
+        msg: "SSMS installation failed!"
+      when: task_to_perform in ['install_ssms', 'all'] and ssms_install is defined and ssms_install.rc != 0
+
